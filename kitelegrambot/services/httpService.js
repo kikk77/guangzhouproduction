@@ -1032,7 +1032,7 @@ ${dbOperations.formatMerchantSkillsDisplay(merchant.id)}`;
                 }
                 
                 // 添加"返回榜单"按钮
-                buttons.push([{ text: '返回榜单', url: `https://t.me/${botUsername}?start=xiaoji233` }]);
+                buttons.push([{ text: '返回榜单', url: `https://t.me/${botUsername}?start=xiaoji899` }]);
                 
                 sendOptions.reply_markup = {
                     inline_keyboard: buttons
@@ -1376,7 +1376,7 @@ ${dbOperations.formatMerchantSkillsDisplay(merchant.id)}`;
             console.warn('⚠️ Bot用户名获取失败，使用默认值');
             return {
                 success: true,
-                username: 'xiaojisystembot' // 默认值
+                username: 'xiaojisystem_bot' // 默认值 - 修正为正确的bot用户名
             };
             
         } catch (error) {
@@ -1384,7 +1384,7 @@ ${dbOperations.formatMerchantSkillsDisplay(merchant.id)}`;
             // 即使出错也返回默认值，确保前端能正常工作
             return {
                 success: true,
-                username: 'xiaojisystembot'
+                username: 'xiaojisystem_bot' // 修正为正确的bot用户名
             };
         }
     }

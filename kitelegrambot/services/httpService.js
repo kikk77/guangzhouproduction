@@ -1032,7 +1032,7 @@ ${dbOperations.formatMerchantSkillsDisplay(merchant.id)}`;
                 }
                 
                 // 添加"返回榜单"按钮
-                buttons.push([{ text: '返回榜单', url: `https://t.me/${botUsername}?start=xiaoji899` }]);
+                buttons.push([{ text: '返回榜单', url: 'https://t.me/xiaoji899' }]);
                 
                 sendOptions.reply_markup = {
                     inline_keyboard: buttons

@@ -629,7 +629,7 @@ function initBotHandlers() {
                     }
                     
                     // 添加返回榜单按钮
-                    buttons.push([{ text: '返回榜单', url: 'https://t.me/xiaojisystem_bot?start=xiaoji899' }]);
+                    buttons.push([{ text: '返回榜单', url: 'https://t.me/xiaoji899' }]);
                     
                     const options = {
                         reply_markup: {
@@ -1037,7 +1037,7 @@ function initBotHandlers() {
                     inline_keyboard: [
                         [{ text: '打开频道', url: merchant.channel_link }],
                         [{ text: '预约上课', callback_data: `attack_${merchantId}` }],
-                        [{ text: '返回榜单', url: 'https://t.me/xiaojisystem_bot?start=xiaoji899' }]
+                        [{ text: '返回榜单', url: 'https://t.me/xiaoji899' }]
                     ]
                 },
                 disable_web_page_preview: false

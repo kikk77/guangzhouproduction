@@ -1472,6 +1472,96 @@ ${dbOperations.formatMerchantSkillsDisplay(merchant.id)}`;
         }
     }
 
+    // 商家关注状态检查API - 备用处理逻辑
+    if (pathname === '/api/merchants/check-follow-status' && method === 'POST') {
+        try {
+            const { merchantIds } = data;
+            if (!merchantIds || !Array.isArray(merchantIds)) {
+                return { success: false, error: '请提供商家ID数组' };
+            }
+            
+            const dbOperations = require('../models/dbOperations');
+            const result = await dbOperations.checkMerchantsFollowStatus(merchantIds);
+            
+            return {
+                success: true,
+                result
+            };
+        } catch (error) {
+            console.error('检查商家关注状态失败:', error);
+            return {
+                success: false,
+                error: '检查商家关注状态失败: ' + error.message
+            };
+        }
+    }
+
+    // 单个商家关注状态测试API - 备用处理逻辑
+    if (pathname === '/api/merchants/test-follow-status' && method === 'POST') {
+        try {
+            const { merchantId } = data;
+            if (!merchantId) {
+                return { success: false, error: '请提供商家ID' };
+            }
+            
+            const dbOperations = require('../models/dbOperations');
+            const merchant = dbOperations.getMerchantById(merchantId);
+            if (!merchant) {
+                return { success: false, error: '商家不存在' };
+            }
+            
+            console.log(`🔍 测试商家关注状态: ${merchant.teacher_name} (${merchant.username})`);
+            
+            const result = await dbOperations.checkSingleMerchantFollowStatus(merchantId);
+            
+            // 添加详细的调试信息
+            const debugInfo = {
+                merchant_info: {
+                    id: merchant.id,
+                    teacher_name: merchant.teacher_name,
+                    username: merchant.username,
+                    user_id: merchant.user_id
+                },
+                follow_status: result
+            };
+            
+            // 如果有用户名，查找交互记录
+            if (merchant.username) {
+                const userRecord = dbOperations.getUserRecordByUsername(merchant.username);
+                if (userRecord) {
+                    debugInfo.user_record = userRecord;
+                    debugInfo.interaction_count = dbOperations.getInteractionCount(userRecord.user_id);
+                    
+                    // 查找最近的状态更新
+                    const { db } = require('../config/database');
+                    const recentStatusStmt = db.prepare(`
+                        SELECT action_type, timestamp, first_name, last_name
+                        FROM interactions 
+                        WHERE user_id = ? AND action_type LIKE 'status_%' 
+                        ORDER BY timestamp DESC 
+                        LIMIT 5
+                    `);
+                    debugInfo.recent_status_updates = recentStatusStmt.all(userRecord.user_id);
+                } else {
+                    debugInfo.user_record = null;
+                    debugInfo.interaction_count = 0;
+                    debugInfo.recent_status_updates = [];
+                }
+            }
+            
+            return {
+                success: true,
+                result: debugInfo
+            };
+        } catch (error) {
+            console.error('测试商家关注状态失败:', error);
+            return {
+                success: false,
+                error: '测试商家关注状态失败: ' + error.message
+            };
+        }
+    }
+
     // API路由不存在
     console.log(`❌ API路径不存在: ${pathname} (${method})`);
     return { 
@@ -1488,7 +1578,9 @@ ${dbOperations.formatMerchantSkillsDisplay(merchant.id)}`;
             'GET /api/charts/*',
             'GET /api/daily-hot-teachers',
             'GET /api/daily-hot-message',
-            'GET /api/bot-username'
+            'GET /api/bot-username',
+            'POST /api/merchants/check-follow-status',
+            'POST /api/merchants/test-follow-status'
         ]
     };
 }

@@ -219,7 +219,7 @@ class AppointmentService {
                     // 正常绑定的商家，直接发送通知
                     const merchantNotification = `老师您好，
 用户名称 ${fullName}（${username}）即将与您进行联系。他想跟您预约${bookTypeText}课程
-请及时关注私聊信息。
+您无需向他主动私信，等待狼友私信你即可。
 ————————————————————————
 🐤小鸡出征！请尽力服务好我们的勇士～
 如遇任何问题，请群内联系小鸡管理员。`;

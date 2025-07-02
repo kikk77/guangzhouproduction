@@ -258,6 +258,11 @@ async function startApp() {
             console.log('   - 触发词自动回复');
             console.log('   - 定时发送消息');
             console.log('   - 消息模板管理');
+            
+            // 检查频道克隆功能状态
+            if (process.env.CHANNEL_CLONE_ENABLED === 'true') {
+                console.log('   - 📺 频道克隆功能已启用');
+            }
         } else {
             console.log('⚠️ Bot功能未启动 - 环境变量不完整');
             console.log('💡 管理后台仍然可用，请在Railway Variables中设置以下变量:');

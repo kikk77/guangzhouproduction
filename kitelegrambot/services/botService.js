@@ -64,6 +64,12 @@ let scheduledTasks = [];
 let bindCodes = [];
 let regions = [];
 
+// 🆕 频道克隆服务变量
+let channelConfigService = null;
+let channelCloneService = null;
+let messageQueueService = null;
+let contentFilterService = null;
+
 // 工具函数：安全处理用户名，避免重复@符号
 function formatUsername(rawUsername) {
     if (!rawUsername) return '未设置用户名';
@@ -327,6 +333,67 @@ async function handleBackButton(userId, messageType, data = {}) {
         
     } catch (error) {
         console.error('处理返回按钮失败:', error);
+    }
+}
+
+// 🆕 频道克隆服务初始化
+async function initializeChannelServices() {
+    try {
+        if (!bot) {
+            console.log('⚠️ Bot未初始化，跳过频道克隆服务初始化');
+            return;
+        }
+
+        // 检查是否启用频道克隆功能
+        const channelCloneEnabled = process.env.CHANNEL_CLONE_ENABLED === 'true';
+        if (!channelCloneEnabled) {
+            console.log('📺 频道克隆功能未启用，跳过初始化');
+            return;
+        }
+
+        console.log('📺 开始初始化频道克隆服务...');
+
+        // 动态导入频道服务
+        const ChannelConfigService = require('./channelConfigService');
+        const ChannelCloneService = require('./channelCloneService');
+
+        // 先重置全局状态，避免多实例冲突
+        if (ChannelCloneService.resetGlobalState) {
+            ChannelCloneService.resetGlobalState();
+        }
+
+        // 初始化配置服务
+        channelConfigService = new ChannelConfigService();
+        
+        // 初始化克隆服务
+        channelCloneService = new ChannelCloneService(bot);
+
+        // 获取启用的配置数量
+        const enabledConfigs = await channelConfigService.getEnabledConfigs();
+        
+        console.log(`✅ 频道克隆服务初始化完成`);
+        console.log(`📺 已启用 ${enabledConfigs.length} 个频道配置`);
+        
+        // 记录服务状态
+        if (enabledConfigs.length > 0) {
+            console.log('📺 频道克隆服务正在监听以下配置:');
+            for (const config of enabledConfigs) {
+                console.log(`   - ${config.name}: ${config.sourceChannel.id} -> ${config.targetChannel.id}`);
+            }
+        }
+
+    } catch (error) {
+        console.error('❌ 频道克隆服务初始化失败:', error);
+        
+        // 即使初始化失败，也要确保服务实例存在（避免后续调用报错）
+        if (!channelConfigService) {
+            try {
+                const ChannelConfigService = require('./channelConfigService');
+                channelConfigService = new ChannelConfigService();
+            } catch (e) {
+                console.error('无法创建ChannelConfigService实例:', e.message);
+            }
+        }
     }
 }
 
@@ -4593,5 +4660,31 @@ module.exports = {
         scheduledTasks,
         bindCodes,
         regions
-    })
+    }),
+    // 🆕 频道克隆服务相关
+    initializeChannelServices,
+    getChannelServices: () => ({
+        cloneService: channelCloneService,
+        queueService: messageQueueService,
+        configService: channelConfigService,
+        filterService: contentFilterService
+    }),
+    // 频道克隆服务管理
+    startChannelServices: async () => {
+        if (messageQueueService && !messageQueueService.isRunning) {
+            messageQueueService.start();
+        }
+        console.log('📺 频道克隆服务已启动');
+        return { success: true, message: '频道克隆服务已启动' };
+    },
+    stopChannelServices: async () => {
+        if (messageQueueService && messageQueueService.isRunning) {
+            messageQueueService.stop();
+        }
+        if (channelCloneService) {
+            channelCloneService.stop();
+        }
+        console.log('📺 频道克隆服务已停止');
+        return { success: true, message: '频道克隆服务已停止' };
+    }
 }; 

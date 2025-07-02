@@ -56,6 +56,18 @@ class ApiService {
         this.routes.set('GET /api/channel-clicks/recent', this.getRecentChannelClicks.bind(this));
         this.routes.set('GET /api/channel-clicks/stats', this.getChannelClicksStats.bind(this));
 
+        // 🆕 频道克隆管理API
+        this.routes.set('GET /api/channel/configs', this.getChannelConfigs.bind(this));
+        this.routes.set('POST /api/channel/configs', this.createChannelConfig.bind(this));
+        this.routes.set('GET /api/channel/configs/:id', this.getChannelConfig.bind(this));
+        this.routes.set('PUT /api/channel/configs/:id', this.updateChannelConfig.bind(this));
+        this.routes.set('DELETE /api/channel/configs/:id', this.deleteChannelConfig.bind(this));
+        this.routes.set('POST /api/channel/configs/:id/toggle', this.toggleChannelConfig.bind(this));
+        this.routes.set('POST /api/channel/configs/:id/test', this.testChannelConfig.bind(this));
+        this.routes.set('GET /api/channel/configs/:id/status', this.getChannelConfigStatus.bind(this));
+        this.routes.set('GET /api/channel/stats/:type', this.getChannelStats.bind(this));
+        this.routes.set('GET /api/channel/logs', this.getChannelLogs.bind(this));
+
         // 订单相关接口
         this.routes.set('GET /api/orders', this.getOrders.bind(this));
         this.routes.set('GET /api/orders/:id', this.getOrderById.bind(this));
@@ -2679,6 +2691,232 @@ class ApiService {
                 success: false,
                 message: '生成当日热门消息失败: ' + error.message
             };
+        }
+    }
+
+    // 🆕 频道克隆管理API方法
+    async getChannelConfigs({ query }) {
+        try {
+            // 延迟加载botService避免循环依赖
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const configs = await channelServices.configService.getAllConfigs();
+            return { success: true, data: configs };
+        } catch (error) {
+            console.error('获取频道配置失败:', error);
+            throw new Error('获取频道配置失败: ' + error.message);
+        }
+    }
+
+    async createChannelConfig({ body }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const result = await channelServices.configService.saveConfig(body);
+            return result;
+        } catch (error) {
+            console.error('创建频道配置失败:', error);
+            throw new Error('创建频道配置失败: ' + error.message);
+        }
+    }
+
+    async getChannelConfig({ params }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const config = await channelServices.configService.getConfig(params.id);
+            if (!config) {
+                return { success: false, error: '配置不存在' };
+            }
+            return { success: true, data: config };
+        } catch (error) {
+            console.error('获取频道配置失败:', error);
+            throw new Error('获取频道配置失败: ' + error.message);
+        }
+    }
+
+    async updateChannelConfig({ params, body }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const result = await channelServices.configService.updateConfig(params.id, body);
+            return result;
+        } catch (error) {
+            console.error('更新频道配置失败:', error);
+            throw new Error('更新频道配置失败: ' + error.message);
+        }
+    }
+
+    async deleteChannelConfig({ params }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const result = await channelServices.configService.deleteConfig(params.id);
+            return result;
+        } catch (error) {
+            console.error('删除频道配置失败:', error);
+            throw new Error('删除频道配置失败: ' + error.message);
+        }
+    }
+
+    async toggleChannelConfig({ params, body }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const { enabled } = body;
+            const result = await channelServices.configService.toggleConfig(params.id, enabled);
+            return result;
+        } catch (error) {
+            console.error('切换频道配置状态失败:', error);
+            throw new Error('切换频道配置状态失败: ' + error.message);
+        }
+    }
+
+    async testChannelConfig({ params }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const result = await channelServices.configService.testConfig(params.id, botService.getBotInstance());
+            return result;
+        } catch (error) {
+            console.error('测试频道配置失败:', error);
+            throw new Error('测试频道配置失败: ' + error.message);
+        }
+    }
+
+    async getChannelConfigStatus({ params }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            if (!channelServices.configService) {
+                throw new Error('频道克隆服务未初始化');
+            }
+
+            const status = await channelServices.configService.getConfigStatus(params.id);
+            return { success: true, data: status };
+        } catch (error) {
+            console.error('获取频道配置状态失败:', error);
+            throw new Error('获取频道配置状态失败: ' + error.message);
+        }
+    }
+
+    async getChannelStats({ params, query }) {
+        try {
+            const botService = require('./botService');
+            const channelServices = botService.getChannelServices();
+            
+            const statsType = params.type;
+            
+            if (statsType === 'configs') {
+                if (!channelServices.configService) {
+                    throw new Error('频道克隆服务未初始化');
+                }
+                const stats = await channelServices.configService.getConfigStats();
+                return { success: true, data: stats };
+            }
+
+            if (statsType === 'clone') {
+                const stats = channelServices.cloneService ? channelServices.cloneService.getCloneStats() : null;
+                return { success: true, data: stats || {} };
+            }
+
+            if (statsType === 'queue') {
+                const stats = channelServices.queueService ? await channelServices.queueService.getQueueStats() : null;
+                return { success: true, data: stats || {} };
+            }
+
+            if (statsType === 'system') {
+                const channelDataMapper = require('../models/channelDataMapper');
+                const mapper = new channelDataMapper();
+                const stats = await mapper.getSystemStats();
+                return { success: true, data: stats };
+            }
+
+            if (statsType === 'summary') {
+                try {
+                    const configStats = channelServices.configService ? await channelServices.configService.getConfigStats() : {};
+                    const cloneStats = channelServices.cloneService ? channelServices.cloneService.getCloneStats() : {};
+                    const queueStats = channelServices.queueService ? await channelServices.queueService.getQueueStats() : {};
+                    
+                    return { 
+                        success: true, 
+                        data: {
+                            totalConfigs: configStats.total || 0,
+                            enabledConfigs: configStats.enabled || 0,
+                            totalClonedMessages: cloneStats.totalCloned || 0,
+                            queuedMessages: queueStats.pendingTasks || 0
+                        }
+                    };
+                } catch (error) {
+                    console.error('获取频道管理汇总统计失败:', error);
+                    return { 
+                        success: true, 
+                        data: {
+                            totalConfigs: 0,
+                            enabledConfigs: 0,
+                            totalClonedMessages: 0,
+                            queuedMessages: 0
+                        }
+                    };
+                }
+            }
+
+            throw new Error('不支持的统计类型: ' + statsType);
+        } catch (error) {
+            console.error('获取频道统计失败:', error);
+            throw new Error('获取频道统计失败: ' + error.message);
+        }
+    }
+
+    async getChannelLogs({ query }) {
+        try {
+            const channelDataMapper = require('../models/channelDataMapper');
+            const mapper = new channelDataMapper();
+            
+            const configId = query.configId || null;
+            const limit = parseInt(query.limit) || 50;
+            
+            const logs = await mapper.getLogs(configId, limit);
+            return { success: true, data: logs };
+        } catch (error) {
+            console.error('获取频道日志失败:', error);
+            throw new Error('获取频道日志失败: ' + error.message);
         }
     }
 }

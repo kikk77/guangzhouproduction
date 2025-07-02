@@ -148,6 +148,7 @@
             <button class="tab" onclick="showTab('tasks')">⏰ 定时任务</button>
             <button class="tab" onclick="showTab('buttons')">🔘 按钮管理</button>
             <button class="tab" onclick="showTab('test')">🧪 测试发送</button>
+            <button class="tab" onclick="window.open('/admin/channels.html', '_blank')">📺 频道管理</button>
             <button class="tab" onclick="window.open('admin/orders.html', '_blank')">📈 订单统计</button>
         </div>
 
@@ -222,6 +223,18 @@
                     <div class="stat-number" id="userEngagement">0%</div>
                     <div>📈 用户参与度</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="channelConfigs">0</div>
+                    <div>📺 频道配置</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="clonedMessages">0</div>
+                    <div>📤 克隆消息数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="queuedMessages">0</div>
+                    <div>⏳ 队列消息数</div>
+                </div>
             </div>
             
             <div class="card">
@@ -231,6 +244,7 @@
                     <p>✅ 数据库连接正常</p>
                     <p>✅ 定时任务调度器运行中</p>
                     <p>✅ 触发词监听已启用</p>
+                    <p id="channelCloneStatus">🔄 检查频道克隆状态中...</p>
                 </div>
             </div>
 
@@ -1435,6 +1449,24 @@
                     activeChats: basicStats.activeChats,
                     userEngagement: basicStats.userEngagement
                 });
+                
+                // 加载频道管理统计数据
+                try {
+                    const channelStats = await apiRequest('/api/channel/stats/summary');
+                    console.log('获取频道管理统计数据:', channelStats);
+                    
+                    document.getElementById('channelConfigs').textContent = channelStats.totalConfigs || 0;
+                    document.getElementById('clonedMessages').textContent = (channelStats.totalClonedMessages || 0).toLocaleString();
+                    document.getElementById('queuedMessages').textContent = channelStats.queuedMessages || 0;
+                    
+                    console.log('频道管理统计更新完成:', channelStats);
+                } catch (channelError) {
+                    console.warn('加载频道管理统计失败（可能功能未启用）:', channelError);
+                    // 设置默认值
+                    document.getElementById('channelConfigs').textContent = 0;
+                    document.getElementById('clonedMessages').textContent = 0;
+                    document.getElementById('queuedMessages').textContent = 0;
+                }
                 
                 console.log('统计数据加载完成');
             } catch (error) {
